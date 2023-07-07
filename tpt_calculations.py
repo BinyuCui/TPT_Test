@@ -230,6 +230,7 @@ def TPT_guided_processing():
         tpt_automation.load_TPT_test_parameters(df_params)  # load geometrical + electrical parameters
 
         # TODO w = 0.4 ... check if it still holds true [26/08/2022]
+        # TODO try to know what is w... [14/7/2023]
         df = add_magnetic_variables_to_df(df, 0.4)
         fig1_handle, _ = plot_TPT_df_electrical(df, "Electrical variables vs. time - TPT acquisition", 1300, 975)
         fig2_handle, _, fig3_handle, _ = plot_TPT_df_magnetic(df, "Magnetic variables vs. time\nTPT acquisition", "BH loop - TPT acquisition", [540, 405], [500, 500])

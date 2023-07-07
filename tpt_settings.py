@@ -8,6 +8,8 @@ def init():
     global psuLowConnected
     global psusConnected
 
+
+
     teensyConnected = False
     picoConnected = False
     psuHighConnected = False

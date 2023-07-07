@@ -115,6 +115,11 @@ probe_N2783B = {
     "Description": "Keysight N2783B"
 }
 
+# if you wanna add additional probe dictionary, you also need to add it to the list_voltage probes and list_current probes
+# it should be noted that the program is originally designed to identify use of probe according to the voltage and ampere rating
+# However, in the practical situation, It's for the convenience that we used fix probe in cycling experiment.
+# modification has been made in the tpt_automation programme
+
 list_voltage_probes = [probe_TA057_20x, probe_TA057_200x, probe_TA041_10x, probe_TA041_100x, probe_TA375_10x,probe_TA386_10x]
 list_current_probes = [probe_TCP2020, probe_N2783B]
 

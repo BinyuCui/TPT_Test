@@ -1,5 +1,7 @@
 import subprocess
 
+# This program is used to set up the package needed for the ATPT project
+# please run this file individually without the main.py if this is your first time working on this project
 # package name and version
 
 packages = {

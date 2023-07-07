@@ -134,9 +134,33 @@ core_14 = {
     "le": 255.3E-3,  # m
     "Ve": 68200.0E-9  # m3
 }
+core_15 = {
+    "ID": "T400-52 iron poweder- UoB Test version",
+    "N1": 23,
+    "N2": 23,
+    "Ae": 346E-6,  # m2
+    "le": 250.0E-3,  # m
+    "Ve": 86400.0E-9  # m3
+}
+core_16 = {
+    "ID": "T300-26 iron poweder- UoB Test version",
+    "N1": 23,
+    "N2": 23,
+    "Ae": 168E-6,  # m2
+    "le": 198E-3,  # m
+    "Ve": 33400.0E-9  # m3
+}
+core_17 = {
+    "ID": "3C90-TX80/40/15 - UoB Test version",
+    "N1": 7,
+    "N2": 7,
+    "Ae": 288.3E-6,  # m2
+    "le": 174.2E-3,  # m
+    "Ve": 50219.0E-9  # m3
+}
 
 list_cores = [core_0, core_1, core_2, core_3, core_4, core_5, core_6, core_7, core_8, core_9,
-    core_10, core_11, core_12, core_13, core_14]
+    core_10, core_11, core_12, core_13, core_14, core_15, core_16, core_17]
 
 
 def print_available_cores():    
