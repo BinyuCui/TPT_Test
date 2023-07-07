@@ -1,0 +1,24 @@
++------------------------------+----------+
+| Parameter                    | Value    |
+|------------------------------+----------|
+| Large-signal inductance [uH] | 384      |
+| Saturation current [A]       | 4        |
+| Actual sample time [ns]      | 8        |
+| V_PSU_HIGH [V]               | 31.02    |
+| V_PSU_LOW [V]                | 30.72    |
+| V_pos (calculated) [V]       | 30.72    |
+| V_pos (measured) [V]         | TBD      |
+| V_neg (calculated) [V]       | 30.72    |
+| V_neg (measured) [V]         | TBD      |
+| T1 [ns]                      | 25000    |
+| T2A [ns]                     | 25000    |
+| T2B [ns]                     | 25000    |
+| T3 [ns]                      | 25000    |
+| N                            | 4        |
+| N1                           | 9        |
+| N2                           | 9        |
+| Ae [m2]                      | 0.0003   |
+| le [m]                       | 0.2553   |
+| Ve [m3]                      | 6.82e-05 |
+| More stuff                   | TBD      |
++------------------------------+----------+

@@ -1,0 +1,2 @@
+,inductance_large_signal_uH,saturation_current,actual_sample_time,V_PSU_HIGH,V_PSU_LOW,V_pos_calculated,V_neg_calculated,T1_ns,T2A_ns,T2B_ns,T3_ns,N_cycles,Ae,le,Ve,N1,N2,S
+0,384,4,8,61.44,61.44,61.44,61.44,25000.0,25000.0,25000.0,25000.0,4,0.0002672,0.2553,6.82e-05,9,9,0
