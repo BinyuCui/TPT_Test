@@ -1,6 +1,6 @@
 import subprocess
 
-# 包的名称和版本号字典
+# package name and version
 
 packages = {
     'picosdk': '1.0',
