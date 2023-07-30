@@ -24,7 +24,7 @@ core_2 = {
     "N2": 2,  # measured using Bode100 (100kHz, -13 dBm)
     "Ae": 0.000368,  # m2
     "le": 0.139,  # m
-    "Ve": 51500E-9   # m3
+    "Ve": 51500E-9  # m3
 }
 
 core_3 = {
@@ -160,20 +160,24 @@ core_17 = {
 }
 
 list_cores = [core_0, core_1, core_2, core_3, core_4, core_5, core_6, core_7, core_8, core_9,
-    core_10, core_11, core_12, core_13, core_14, core_15, core_16, core_17]
+              core_10, core_11, core_12, core_13, core_14, core_15, core_16, core_17]
 
 
-def print_available_cores():    
+# It should be noted here that if you want to add more testing core data, remember to also put it in the list_cores
+
+def print_available_cores():
     n_cores = len(list_cores)
     table_cores = []
     for i in range(0, n_cores):
-        table_cores.append([i, list_cores[i]["ID"], list_cores[i]["N1"], list_cores[i]["N2"], list_cores[i]["le"], list_cores[i]["Ae"], list_cores[i]["Ve"]])
-    print(tabulate(table_cores, headers=['Index', 'ID', 'N1', 'N2', 'le [m]', 'Ae [m2]', 'Ve [m3]'],  tablefmt='psql'))
+        table_cores.append(
+            [i, list_cores[i]["ID"], list_cores[i]["N1"], list_cores[i]["N2"], list_cores[i]["le"], list_cores[i]["Ae"],
+             list_cores[i]["Ve"]])
+    print(tabulate(table_cores, headers=['Index', 'ID', 'N1', 'N2', 'le [m]', 'Ae [m2]', 'Ve [m3]'], tablefmt='psql'))
 
 
 def get_core(n):
     n_cores = len(list_cores)
     core = []
-    if(n >= 0 and n < n_cores):
+    if (n >= 0 and n < n_cores):
         core = list_cores[n]
     return core

@@ -30,6 +30,7 @@ def init():
     global MICROCONTROLLER_min_frequency
     global MICROCONTROLLER_max_N
     global MICROCONTROLLER_min_N
+
     MICROCONTROLLER_max_duty_cycle = 0.8
     MICROCONTROLLER_min_duty_cycle = 0.2
     MICROCONTROLLER_max_frequency = 800000  # Hz
