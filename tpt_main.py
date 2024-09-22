@@ -26,6 +26,7 @@ import tpt_aux
 import tpt_automation
 import tpt_calculations
 
+#version 2 Pure test same as version1
 def Init():
     # Calculate 
     # unsigned int sign;          //0: positive / 1: negative
@@ -289,15 +290,15 @@ def Init():
                 clear_terminal()
         elif answer == "6":
             if tpt_settings.psusConnected and tpt_settings.teensyConnected:
-                if(tpt_settings.saturation_calculated):
+                #if(tpt_settings.saturation_calculated):
                     tpt_automation.demagnetize_core()
                     print("Demagnetization process completed.")
                     input("\nPress any key to continue.")
-                    clear_terminal()                           
-                else:
-                    print("Please execute inductance test first.")
-                    input("\nPress any key to continue.")
                     clear_terminal()
+                #else:
+                #    print("Please execute inductance test first.")
+                #    input("\nPress any key to continue.")
+                #    clear_terminal()
             else:
                 print("Programmable PSUs or microcontroller not connected - Option unavailable")
                 input("\nPress any key to continue.")

@@ -158,9 +158,24 @@ core_17 = {
     "le": 174.2E-3,  # m
     "Ve": 50219.0E-9  # m3
 }
-
+core_18 = {
+    "ID": "N87 - magnet version",
+    "N1": 5,
+    "N2": 5,
+    "Ae": 82.6E-6,  # m2
+    "le": 82.06E-3,  # m
+    "Ve": 6778.0E-9  # m3
+}
+core_19 = {
+    "ID": "3C90 - magnet version",
+    "N1": 7,
+    "N2": 7,
+    "Ae": 48.9E-6,  # m2
+    "le": 60.2E-3,  # m
+    "Ve": 2942.0E-9  # m3
+}
 list_cores = [core_0, core_1, core_2, core_3, core_4, core_5, core_6, core_7, core_8, core_9,
-              core_10, core_11, core_12, core_13, core_14, core_15, core_16, core_17]
+              core_10, core_11, core_12, core_13, core_14, core_15, core_16, core_17, core_18, core_19]
 
 
 # It should be noted here that if you want to add more testing core data, remember to also put it in the list_cores

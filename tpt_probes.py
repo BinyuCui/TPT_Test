@@ -51,7 +51,7 @@ probe_TA041_100x = {
     "PN": "TA041",
     "magnitude": "voltage",
     "available": False,
-    "attenuation": 200,
+    "attenuation": 100,
     "units": "volt",
     "max_input_positive": 700,
     "max_input_negative": -700,

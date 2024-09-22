@@ -27,47 +27,90 @@ from picosdk.constants import PICO_STATUS, PICO_STATUS_LOOKUP
 
 
 def TPT_group_variables_setup():
-    L_uH = 264
-    D = 0.5
-    tpt_settings.saturation_current = 4
-    N_cycles = 4
 
-    ## TODO Just to hightlight, doesn't need to do. Here is the place to change the group variables
+    # Initial variable setting
+    Multiple_debug = True
+    if (Multiple_debug):
+        L_uH = 450
+        D = 0.5
+        tpt_settings.saturation_current = 4
+        N_cycles = 4
+    else:
+        L_uH= float(input("\nPlease input the Large-signal inductance value in uH: "))
+        D = float(input("\nPlease input the duty cycle (0-1): "))
+        N_cycles = float(input("\nPlease input the number of T2 cycle value: "))
+        tpt_settings.saturation_current = float(input("\nPlease input the Large-signal saturate current value: "))
 
-    tpt_group_variables.Group_frequency = [20, 40]
-    tpt_group_variables.Group_DC_bias = [0.5, 1]
-    tpt_group_variables.Group_I_delta = [0.5, 1]
+    # Here is the place to change the group variables.
+    # Variable will follow this order.
+    # The order will be I_delta (V_PSU), Frequency and DC-bias value.
+    group_variable_mode = float(input("\nPlease select the group variable input mode (CSV(1) or Mannual(0): "))
+    tpt_group_variables.Group_frequency = []  # inkHz
+    tpt_group_variables.Group_DC_bias = []
+    tpt_group_variables.Group_I_delta = []
+    tpt_group_variables.Group_Voltage = []
     tpt_group_variables.Group_data = []
+    voltage_setup = 0
+    if (group_variable_mode) == 0:
+        voltage_setup = tpt_aux.prompt_question_yes_no("\nDo you want to use voltage setup insteand of I_delta","N")
+        if (voltage_setup):
+            for V_PSU in tpt_group_variables.Group_Voltage:
+                for frequency in tpt_group_variables.Group_frequency:
+                    for dc_bias in tpt_group_variables.Group_DC_bias:
+                        combination = [V_PSU, frequency, dc_bias]
+                        tpt_group_variables.Group_data.append(combination)
+        else:
+            for I_delta in tpt_group_variables.Group_I_delta:
+                for frequency in tpt_group_variables.Group_frequency:
+                    for dc_bias in tpt_group_variables.Group_DC_bias:
+                        combination = [I_delta, frequency, dc_bias]
+                        tpt_group_variables.Group_data.append(combination)
+    else:
+        path_df = 'Matfile\output.csv'
+        df = pd.read_csv(path_df)
+        tpt_group_variables.Group_DC_bias = df["I_0"]
+        tpt_group_variables.Group_I_delta = df["I_delta"]
+        tpt_group_variables.Group_frequency = df["Frequency"]
+        tpt_group_variables.Group_DC_bias = abs(tpt_group_variables.Group_DC_bias)
+        for i in range(len(tpt_group_variables.Group_frequency)):
+            combination = [tpt_group_variables.Group_I_delta[i],tpt_group_variables.Group_frequency[i],tpt_group_variables.Group_DC_bias[i]]
+            tpt_group_variables.Group_data.append(combination)
 
-    for I_delta in tpt_group_variables.Group_I_delta:
-        for frequency in tpt_group_variables.Group_frequency:
-            for dc_bias in tpt_group_variables.Group_DC_bias:
-                combination = [I_delta, frequency, dc_bias]
-                tpt_group_variables.Group_data.append(combination)
+
+    print(tpt_group_variables.Group_data)
+
     print("+---------------------------------------------+")
     print("| Please confirm the test conditions you would like to test |")
-    print(" The value will be listed in the order of \nI_delta [A], Frequency [kHz], DC-bias condition [A]")
+    print("The value will be listed in the order of \nI_delta [A] (V_PSU[v], depending on your setting), Frequency ["
+          "kHz], DC-bias condition [A]")
     print("+---------------------------------------------+")
     for i in range(len(tpt_group_variables.Group_data)):
         print("\nNo.", i, "--------", )
         for j in range(len(tpt_group_variables.Group_data[i])):
             print(tpt_group_variables.Group_data[i][j], end=' ')
     input("\nPress any key to proceed with verifying the parameters.")
-    for i in range(len(tpt_group_variables.Group_data)):
-        temp_I_delta = tpt_group_variables.Group_data[i][0]
-        temp_frequency = tpt_group_variables.Group_data[i][1] * 1000
-        temp_dc_bias = tpt_group_variables.Group_data[i][2]
-        V_PSU_HIGH, V_PSU_LOW, V_pos, V_neg, T1_ns, T2A_ns, T2B_ns, T3_ns = \
-            TPT_test_parameters_to_setup_parameters(L_uH, temp_dc_bias, temp_I_delta, D, temp_frequency)
-        parameters_OK = TPT_check_parameters(L_uH, tpt_settings.saturation_current, temp_dc_bias, temp_I_delta, D,
-                                             temp_frequency, V_PSU_HIGH,
-                                             V_PSU_LOW, T1_ns, T2A_ns, T2B_ns, T3_ns, N_cycles)
-        print("")
-        if not (parameters_OK):
-            print("I_delta", temp_I_delta, "Frequency", temp_frequency, "DC-bias condition", temp_dc_bias, "--",
-                  "This set of variables is out of limit")
-            print("Please alter the value in tpt_automation.py file before proceed to further testing")
-            break
+    if (voltage_setup == 1):
+        for i in range(len(tpt_group_variables.Group_data)):
+            temp_v = tpt_group_variables.Group_data[i][0]
+            temp_frequency = tpt_group_variables.Group_data[i][1] * 1000
+            temp_dc_bias = tpt_group_variables.Group_data[i][2]
+
+    else:
+        for i in range(len(tpt_group_variables.Group_data)):
+            temp_I_delta = tpt_group_variables.Group_data[i][0]
+            temp_frequency = tpt_group_variables.Group_data[i][1] * 1000
+            temp_dc_bias = tpt_group_variables.Group_data[i][2]
+            V_PSU_HIGH, V_PSU_LOW, V_pos, V_neg, T1_ns, T2A_ns, T2B_ns, T3_ns = \
+                TPT_test_parameters_to_setup_parameters(L_uH, temp_dc_bias, temp_I_delta, D, temp_frequency)
+            parameters_OK = TPT_check_parameters(L_uH, tpt_settings.saturation_current, temp_dc_bias, temp_I_delta, D,
+                                                 temp_frequency, V_PSU_HIGH,
+                                                 V_PSU_LOW, T1_ns, T2A_ns, T2B_ns, T3_ns, N_cycles)
+            print("")
+            if not (parameters_OK):
+                print("I_delta", temp_I_delta, "Frequency", temp_frequency, "DC-bias condition", temp_dc_bias, "--",
+                      "This set of variables is out of limit")
+                print("Please alter the value in tpt_automation.py file before proceed to further testing")
+                break
 
 
 def TPT_guided_test(chandle, pico_series):
@@ -79,12 +122,42 @@ def TPT_guided_test(chandle, pico_series):
     print("")
 
     debug = True
+    # Todo Debug option is here. Originally the programme will need to run the inductance test before running the TPT. However, it will take certain amount of time to do that.
+    # In testing environment, debug option is used to skip the inductance testing procedure, but you can always turn the debug setting off to run the normal procedure.
+
+    Current_debug_core = 1
+
+    # Current core index (Only in debug state)
+        # 1, N87
+        # 2, 3C90
+        # 3, T300-26
+        # 4, T400-52
+
     if (debug):
-        tpt_settings.inductance_large_signal_uH = 187 # iron powder
-        #tpt_settings.inductance_large_signal_uH = 384 #N87_blue
-        L_uH = tpt_settings.inductance_large_signal_uH
-        tpt_settings.saturation_current = 40  # iron powder
-        #tpt_settings.saturation_current = 2.250
+            if (Current_debug_core == 1):
+                tpt_settings.inductance_large_signal_uH = 384
+                tpt_settings.saturation_current = 3
+                L_uH = tpt_settings.inductance_large_signal_uH
+            elif (Current_debug_core == 2):
+                tpt_settings.inductance_large_signal_uH = 450
+                tpt_settings.saturation_current = 3
+                L_uH = tpt_settings.inductance_large_signal_uH
+            elif (Current_debug_core == 3):
+                tpt_settings.inductance_large_signal_uH = 187
+                tpt_settings.saturation_current = 40
+                L_uH = tpt_settings.inductance_large_signal_uH
+            elif(Current_debug_core == 4):
+                tpt_settings.inductance_large_signal_uH = 124
+                tpt_settings.saturation_current = 40
+                L_uH = tpt_settings.inductance_large_signal_uH
+            elif (Current_debug_core == 5):
+                tpt_settings.inductance_large_signal_uH = 107.8
+                tpt_settings.saturation_current = 2.2
+                L_uH = tpt_settings.inductance_large_signal_uH
+            else:
+                tpt_settings.inductance_large_signal_uH = 150.6
+                tpt_settings.saturation_current = 2.2
+                L_uH = tpt_settings.inductance_large_signal_uH
     else:
         L_uH = tpt_settings.inductance_large_signal_uH
         print("Large signal inductance:", round(L_uH, 3), "uH")
@@ -148,15 +221,27 @@ def TPT_guided_test(chandle, pico_series):
             N_cycles = float(input("Number of TPT cycles (Stage II): "))
         # demagnetization_confirm = tpt_aux.prompt_question_yes_no(
         #    "Do you want to apply demagnetization process (Slower but more accurate)", "Y")
-        print("\nChecking if parameters are within range...")
-        print("")
+
         V_PSU_HIGH, V_PSU_LOW, V_pos, V_neg, T1_ns, T2A_ns, T2B_ns, T3_ns = \
             TPT_test_parameters_to_setup_parameters(L_uH, I_0, I_delta, D, f_Hz)
+        #这里是手动输入电压的环节
+        Manual_voltage = tpt_aux.prompt_question_yes_no("\nDo you want to manually set the PSU voltage", "Y")
+        if(Manual_voltage):
+            V_PSU_HIGH = float(input("\nPlease input the voltage for high PSUs "))
+            V_PSU_LOW = float(input("\nPlease input the voltage for low PSUs "))
+        print("\nChecking if parameters are within range...")
+        print("")
         parameters_OK = TPT_check_parameters(L_uH, tpt_settings.saturation_current, I_0, I_delta, D, f_Hz, V_PSU_HIGH,
                                              V_PSU_LOW, T1_ns, T2A_ns, T2B_ns, T3_ns, N_cycles)
         print("")
 
     if parameters_OK:
+        #if (debug):
+        #    T1_ns = 25000
+            #T3_ns = 0
+            #V_PSU_HIGH =
+            #V_PSU_LOW =
+
         # Folder and date strings
         str_datetime = tpt_aux.get_datetime_string()
         str_folder = str_datetime + " - Test TPT"
@@ -164,6 +249,7 @@ def TPT_guided_test(chandle, pico_series):
         os.makedirs(str_path)
 
         # Store parameters in global variables
+       #这几个才是核心的传给Teensy的数据，前面的都可以变
         tpt_settings.T1_ns = T1_ns
         tpt_settings.T2A_ns = T2A_ns
         tpt_settings.T2B_ns = T2B_ns
@@ -183,7 +269,7 @@ def TPT_guided_test(chandle, pico_series):
         voltage_probe_secondary_ID = tpt_probes.get_probe_ID_enough_for("voltage", "max_input_positive",
                                                                         max_voltage_secondary * 1.15)
         voltage_probe_primary_ID = "V6"
-        voltage_probe_secondary_ID = "V3"
+        voltage_probe_secondary_ID = "V6"
         current_probe_ID = "C2"
         print("--------------------------------------")
         print("\nVerify that the following probes are connected to the oscilloscope:")
@@ -210,10 +296,10 @@ def TPT_guided_test(chandle, pico_series):
         n_iteration = 0
         V_difference_index = 0
         dc_bias_difference_index = 0
-        V_difference_alter_value = 0.7
-        V_difference_limit = 0.7
-        dc_bias_difference_limit = 0.5
-        dc_bias_difference_alter_value = 300
+        V_difference_alter_value = 0.3
+        V_difference_limit = 1
+        dc_bias_difference_limit = 0.35
+        dc_bias_difference_alter_value = 200
 
         while (continue_TPT_test):
             print("\n - Iteration ", n_iteration, " -\n")
@@ -468,7 +554,7 @@ def TPT_guided_test(chandle, pico_series):
 
                 dc_bias = compare_DC_bias(T1_ns, T2A_ns, T2B_ns, N_cycles, new_sample_time, data_current_primary)
                 dc_bias_difference = dc_bias - I_0
-                print("DC-bias is", dc_bias)
+                print("DC-bias difference is", dc_bias_difference)
 
                 # FEEDBACK LOOP_1: Compare the voltage amplitude difference here
                 V_difference = compare_voltage_level(T1_ns, T2A_ns, T2B_ns, N_cycles, new_sample_time,
@@ -480,8 +566,7 @@ def TPT_guided_test(chandle, pico_series):
 
                 if (abs(dc_bias_difference) > dc_bias_difference_limit):
                     dc_bias_difference_error = 1
-
-                if (abs(V_difference) >= V_difference_limit):
+                elif (abs(V_difference) >= V_difference_limit):
                     V_difference_error = 1
                     #
                     # if (V_difference_index == 1):
@@ -512,6 +597,11 @@ def TPT_guided_test(chandle, pico_series):
                     print("Saving plot in path: ", str_fig)
                     path_parameters = str_path + "/" + str_datetime + " - Iteration " + str(n_iteration).zfill(
                         2) + " - TPT Parameters.txt"
+                    print(T1_ns)
+                    tpt_settings.T1_ns = T1_ns
+                    tpt_settings.T2A_ns = T2A_ns
+                    tpt_settings.T2B_ns = T2B_ns
+                    tpt_settings.T3 = T3_ns
                     save_TPT_test_parameters(path_parameters, V_PSU_HIGH, V_PSU_LOW, V_pos, V_neg, T1_ns, T2A_ns,
                                              T2B_ns, T3_ns, N_cycles, actual_sample_time)
                     # Save dataframe to CSV file
@@ -527,6 +617,9 @@ def TPT_guided_test(chandle, pico_series):
                     continue_TPT_test = True
                     V_difference_index = V_difference_index + 1
                     if (V_difference_index == 1):
+                        path_dataframe_measurements = str_path + "/" + str_datetime + " - V_diff error" + str(
+                            V_difference_index) + "- TPT Measurements.csv"
+                        df.to_csv(path_dataframe_measurements)
 
                         if (V_difference >= 0):
                             V_PSU_LOW = V_PSU_LOW + 0.9 * abs(V_difference)
@@ -534,9 +627,15 @@ def TPT_guided_test(chandle, pico_series):
                             V_PSU_HIGH = V_PSU_HIGH + 0.9 * abs(V_difference)
                     else:
                         if (V_difference >= 0):
-                            V_PSU_LOW = V_PSU_LOW + V_difference_alter_value
+                            if(V_difference >= 1):
+                                V_PSU_LOW = V_PSU_LOW + 0.9 * abs(V_difference)
+                            else:
+                                V_PSU_LOW = V_PSU_LOW + V_difference_alter_value
                         else:
-                            V_PSU_HIGH = V_PSU_HIGH + V_difference_alter_value
+                            if(V_difference <= -1):
+                                V_PSU_HIGH = V_PSU_HIGH + 0.9 * abs(V_difference)
+                            else:
+                                V_PSU_HIGH = V_PSU_HIGH + V_difference_alter_value
 
 
                 elif (dc_bias_difference_error == 1):
@@ -544,8 +643,10 @@ def TPT_guided_test(chandle, pico_series):
                     continue_TPT_test = True
                     if (dc_bias_difference > 0):
                         T1_ns = T1_ns - ((L_uH * dc_bias_difference_alter_value) / V_PSU_HIGH)
+                        tpt_settings.T1_ns = T1_ns
                     else:
-                        T1_ns = T1_ns + ((L_uH * 1e2) / V_PSU_HIGH)
+                        T1_ns = T1_ns + ((L_uH * dc_bias_difference_alter_value) / V_PSU_HIGH)
+                        tpt_settings.T1_ns = T1_ns
                     print("T1_ns is now", T1_ns, "ns")
                     dc_bias_difference_index = dc_bias_difference_index + 1
                     # if (V_difference_index == 1):
@@ -688,6 +789,7 @@ def TPT_guided_test(chandle, pico_series):
                             # TPT calculations
                             # Save results to file
                             path_parameters = str_path + "/" + str_datetime + " - TPT Parameters.txt"
+                            print(T1_ns)
                             save_TPT_test_parameters(path_parameters, V_PSU_HIGH, V_PSU_LOW, V_pos, V_neg, T1_ns,
                                                      T2A_ns, T2B_ns, T3_ns, N_cycles, actual_sample_time)
                             # Save dataframe to CSV file
@@ -716,6 +818,12 @@ def TPT_guided_test(chandle, pico_series):
 def demagnetize_core():
     # 给TL进行赋值
     tpt_micro.reset_microcontroller()
+    debug = 1
+    if (debug == 1):
+        tpt_settings.saturation_time_ns = 100000
+        tpt_settings.saturation_average_voltage = 30
+
+
     print("Starting demagnetization process...")
     print("Warning (TODO) - check the signals with the ocilloscope (explanation in comment in for loop)")
     TL = math.floor(tpt_settings.saturation_time_ns)
@@ -801,13 +909,15 @@ def inductance_guided_test(chandle, pico_series):
                 input("Press any key once the PSUs are set.")
         else:
             inductance_within_range = True
-            PSU_voltage = round(0.5 * tpt_settings.inductance_apriori_uH * 1e-6 / 5e-6, 2)
-            #PSU_voltage = 100
-            # 这里是在算PSU的电压，但上面那个电压不是已经设定了吗，round（）是四舍五入function，这里这个else完全不知道什么时候能用到
+            PSU_voltage= round(0.5 * tpt_settings.inductance_apriori_uH * 1e-6 / 5e-6, 2)
+            PSU_voltage_LOW = round(0.5 * tpt_settings.inductance_apriori_uH * 1e-6 / 5e-6, 2)
+            PSU_voltage = 5
+            PSU_voltage_LOW = 5
+
             if (tpt_settings.psusConnected):
                 print("Setting PSUs to", PSU_voltage, " V...")
                 tpt_PSU.set_PSU_voltage_modbus(tpt_ser.ser_PSU_HIGH, PSU_voltage)
-                tpt_PSU.set_PSU_voltage_modbus(tpt_ser.ser_PSU_LOW, PSU_voltage)
+                tpt_PSU.set_PSU_voltage_modbus(tpt_ser.ser_PSU_LOW, PSU_voltage_LOW)
                 tpt_PSU.enable_PSU(tpt_ser.ser_PSU_HIGH)
                 tpt_PSU.enable_PSU(tpt_ser.ser_PSU_LOW)
             else:
@@ -849,9 +959,10 @@ def inductance_guided_test(chandle, pico_series):
 
             # Frequency range and TL values
 
-            min_frequency = 300  # Hz - Theoretical limit due to dead-time resolution: 286 Hz (temporary, pending fix)
-            max_frequency = 100000  # Hz
-            frequencies_per_decade = 12
+            min_frequency = 3000  # Hz - Theoretical limit due to dead-time resolution: 286 Hz (temporary, pending fix)
+            max_frequency = 20000  # Hz
+            # max_frequency = 20000  # Hz
+            frequencies_per_decade = 5
             r = 10 ** (1 / frequencies_per_decade)  # frequency ratio
             # Create list of frequencies in the sweep
             # 从高往低扫频率，每次将最高频率除以r值，一直除到最小值，默认赋值中r大概是1.2，我也不知道为什么要这么测
@@ -1020,6 +1131,12 @@ def inductance_guided_test(chandle, pico_series):
                     # time_array_ns = np.linspace(0, ((c_total_samples.value)-1) * timeIntervalns.value, c_total_samples.value)
                     time_array_ns = np.linspace(0, ((c_total_samples.value) - 1) * actual_sample_time,
                                                 c_total_samples.value)
+
+                    df = pd.DataFrame(np.vstack(
+                        (time_array_ns, A_array, C_array))).transpose()
+                    df.columns = ['Time', 'Vp', 'Cp']
+
+
                     time_array_plot = time_array_ns
                     str_time = "Time (ns)"
                     max_time_ns = max(time_array_ns)
@@ -1061,6 +1178,11 @@ def inductance_guided_test(chandle, pico_series):
                         TL) + "ns.png"
                     # str_fig = "Figures/Figure" + str(n) + " - TL=" + str(TL) + "ns.png"
                     plt.savefig(str_fig, dpi=tpt_settings.DPI)
+
+                    path_dataframe_measurements = str_path + "/" + str_datetime + " - Iteration " + str(n).zfill(2) + " - TL=" + str(
+                        TL) + " - TPT Measurements.csv"
+                    df.to_csv(path_dataframe_measurements)
+
                     print(str_fig)
                     # from IPython import embed; embed()
                     trigger_occurred = tpt_osc.determine_if_trigger_occurred(A_array, trigger_level)
@@ -1091,8 +1213,7 @@ def inductance_guided_test(chandle, pico_series):
                                                                                                           actual_pre_trigger_samples,
                                                                                                           actual_sample_time,
                                                                                                           TL)
-                        print("The large-signal inductance of the inductor is ",
-                              tpt_settings.inductance_large_signal_uH, "uH")
+                        print("The large-signal inductance of the inductor is ", tpt_settings.inductance_large_signal_uH, "uH")
                         # Save results to text file
                         path_results = str_path + "/" + str_datetime + " - Inductance Results.txt"
                         save_inductance_test_results(path_results, tpt_settings.inductance_large_signal_uH,
@@ -1145,6 +1266,9 @@ def determine_if_inductor_saturated(current_array_raw, voltage_array_raw, actual
     i_stop = actual_pre_trigger_samples + 1 + samples_per_half_period
     # eliminate first glitches (10% of waveform)
     i_start = i_start + math.floor((i_stop - i_start) * 0.1)
+    i_stop = i_stop - math.floor((i_stop - i_start) * 0.1)
+
+    print("start index and stop index are",i_start,"and",i_stop)
 
     current_array = current_array_raw[i_start:i_stop]
     voltage_array = voltage_array_raw[i_start:i_stop]
@@ -1190,7 +1314,7 @@ def calculate_large_signal_inductance(voltage_array_raw, current_array_raw, actu
     i_start = i_start + math.floor((i_stop - i_start) * 0.1)
     # eliminate second half of half-period (so we'll be roughly taking 45 % of the positive pulse): 
     # 10% (glithes) + 45 % (calculation) + 45% (discarded because there may be saturation)
-    i_stop = i_start + math.floor((i_stop - i_start) / 2)
+    i_stop = i_start + math.floor((i_stop - i_start) / 2) - math.floor((i_stop - i_start) * 0.2)
     current_array = current_array_raw[i_start:i_stop]
     voltage_array = voltage_array_raw[i_start:i_stop]
     x_array = np.linspace(0, current_array.size - 1, num=current_array.size) * actual_sample_time * 1e-9
@@ -1225,9 +1349,9 @@ def TPT_test_parameters_to_setup_parameters(L_uH, I_0, I_delta, D, f_Hz):
         # T3_ns = T1_ns * (V_pos / V_neg) - T2B_ns (with old chronogram 12/08/22)
         T3_ns = T1_ns * (V_pos / V_neg)  # with new chronogram for stage IV (12/08/22)
 
-        R_switch = 0.075  # TODO verify that this approach is correct / missing diode drop
+        R_switch = 0.075
         R_switch = 0
-        V_diode = 0  # TODO correct diode drop
+        V_diode = 0
         V_PSU_HIGH = round(V_pos + I_0 * R_switch + V_diode, 3)
         V_PSU_LOW = round(V_neg + I_0 * R_switch + V_diode, 3)
     else:
@@ -1237,9 +1361,9 @@ def TPT_test_parameters_to_setup_parameters(L_uH, I_0, I_delta, D, f_Hz):
         # T3_ns = T1_ns * (V_neg / V_pos) - T2B_ns  (with old chronogram 12/08/22)
         T3_ns = T1_ns * (V_neg / V_pos)  # with new chronogram for stage IV (12/08/22)
 
-        R_switch = 0.075  # TODO verify that this approach is correct / missing diode drop
+        R_switch = 0.075
         R_switch = 0
-        V_diode = 0  # TODO correct diode drop
+        V_diode = 0
         V_PSU_HIGH = round(V_pos + I_0 * R_switch + V_diode, 3)
         V_PSU_LOW = round(V_neg + I_0 * R_switch + V_diode, 3)
     return V_PSU_HIGH, V_PSU_LOW, V_pos, V_neg, T1_ns, T2A_ns, T2B_ns, T3_ns
@@ -1434,12 +1558,12 @@ def calculate_coreloss(T1, T2A, T2B, N_cycle, new_sample_time, voltage_array, cu
 
 
 def compare_voltage_level(T1, T2A, T2B, N_cycle, new_sample_time, voltage_array):
-    V_start_low = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + 0.1 * T2A) * (1 / new_sample_time))
-    V_end_low = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + 0.9 * T2A) * (1 / new_sample_time))
+    V_start_low = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + 0.4 * T2A) * (1 / new_sample_time))
+    V_end_low = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + 0.8 * T2A) * (1 / new_sample_time))
     Mean_finding_array_low = voltage_array[V_start_low:V_end_low]
     mean_low = np.mean(Mean_finding_array_low)
-    V_start_high = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + T2A + 0.1 * T2B) * (1 / new_sample_time))
-    V_end_high = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + T2A + 0.9 * T2B) * (1 / new_sample_time))
+    V_start_high = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + T2A + 0.4 * T2B) * (1 / new_sample_time))
+    V_end_high = math.floor((T1 + (N_cycle - 2) * (T2A + T2B) + T2A + 0.8 * T2B) * (1 / new_sample_time))
     Mean_finding_array_high = voltage_array[V_start_high:V_end_high]
     mean_high = np.mean(Mean_finding_array_high)
     print("TEST", V_start_low, V_end_low, V_start_high, V_end_high)

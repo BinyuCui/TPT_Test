@@ -92,7 +92,9 @@ def reset_microcontroller():
     tpt_ser.ser_micro.close()
     print("Reestablishing serial communication with microcontroller.")
     ports = serial_ports()
-    string_port = ports[tpt_ser.portIndex_micro]
+    print(ports)
+    #string_port = ports[tpt_ser.portIndex_micro]
+    string_port = 'COM10'
     tpt_ser.ser_micro = serial.Serial(string_port)  # open serial port
     print("Reconnected to serial port ", string_port)
 

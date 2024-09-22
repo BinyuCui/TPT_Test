@@ -7,6 +7,7 @@ import math
 
 import tpt_settings
 import tpt_automation
+import tpt_group_variables
 import draggable_lines_class
 
 def TPT_coreloss_calculation(df, df_params):
@@ -26,11 +27,13 @@ def TPT_coreloss_calculation(df, df_params):
 
 
     Actual_sample_time = df_params["actual_sample_time"]
-    Actual_pre_sample = 100 * Actual_sample_time/5
+    Actual_pre_sample = 100 * Actual_sample_time/4
     sampling_time = math.floor(time_array[10]-time_array[9])
 
     T_start = math.floor((T1_ns + T2A_ns +2*(T2A_ns +T2B_ns))/sampling_time + Actual_pre_sample)
     T_stop = math.floor((T1_ns + T2A_ns + T2A_ns + T2B_ns + 2*(T2A_ns +T2B_ns))/sampling_time+ Actual_pre_sample)
+    print(T_start,T_stop)
+
     current_array = Cp_array[T_start:T_stop]
     voltage_array = Vs_array[T_start:T_stop]
     voltage_array = voltage_array.values
@@ -42,7 +45,7 @@ def TPT_coreloss_calculation(df, df_params):
         i = i + 1
     Q_sum = np.sum(Q_loss)
     P = Q_sum * sampling_time * 1e-09
-    
+
     return P
 
 
@@ -77,13 +80,13 @@ def plot_TPT_df_electrical(df, str_title, pixels_h, pixels_v, scale_hw=False):
     ax_Vp.set_ylabel('Primary\nvoltage (V)')
     if scale_hw is True:
         ax_Vp.set_ylim(-tpt_settings.max_input_after_attenuation_A_V, tpt_settings.max_input_after_attenuation_A_V)
-    
+
     ax_Cp.plot(time_array_plot, Cp_array)  # amps
     ax_Cp.set_xlabel(str_time)
     ax_Cp.set_ylabel('Primary\ncurrent (A)')
     if scale_hw is True:
         ax_Cp.set_ylim([-tpt_settings.max_input_after_attenuation_C_A, tpt_settings.max_input_after_attenuation_C_A])
-    
+
     ax_Vs.plot(time_array_plot, Vs_array)  # volts
     ax_Vs.set_xlabel(str_time)
     ax_Vs.set_ylabel('Secondary\nvoltage (V)')
@@ -100,7 +103,7 @@ def plot_TPT_df_electrical(df, str_title, pixels_h, pixels_v, scale_hw=False):
     #plt.pause(3)
     plt.pause(0.1)
     print("Plotting graphs. Please close them before proceeding with the test.")
-    
+
     return figure, [ax_Vp, ax_Cp, ax_Vs]
 
 
@@ -134,18 +137,18 @@ def plot_TPT_df_magnetic(df, title_time, title_loop, pixels_fig_time, pixels_fig
     ax_B.plot(time_array_plot, B_array)  # volts
     ax_B.set_xlabel(str_time)
     ax_B.set_ylabel('B - Magnetic flux\ndensity (T)')
-    
+
     ax_H.plot(time_array_plot, H_array)  # amps
     ax_H.set_xlabel(str_time)
     ax_H.set_ylabel('H - Magnetic field\nstrength (A/m)')
-    
+
     figure_time.set_size_inches(pixels_h_time / tpt_settings.DPI, pixels_v_time / tpt_settings.DPI)
     figure_time.suptitle(title_time)
     figure_time.tight_layout()
     plt.ion()
     plt.show(block=False)
     plt.pause(0.1)
-    
+
     # BH plot
     figure_loop = plt.figure()
     ax_loop = plt.axes()
@@ -155,7 +158,7 @@ def plot_TPT_df_magnetic(df, title_time, title_loop, pixels_fig_time, pixels_fig
     figure_loop.set_size_inches(pixels_h_loop / tpt_settings.DPI, pixels_v_loop / tpt_settings.DPI)
     figure_loop.suptitle(title_loop)
     figure_loop.tight_layout()
-    
+
     plt.ion()
     plt.show(block=False)
     plt.pause(0.1)
@@ -169,7 +172,7 @@ def plot_single_variable(df, var, title_str, pixels_h, pixels_v):
     time_array = df["Time"].to_numpy()
     # TODO check that var exists in df
     var_array = df[var].to_numpy()
-    
+
     str_time = "Time (ns)"
     str_var = "N/A"
     if(var == "Vp"):
@@ -216,28 +219,63 @@ def TPT_guided_processing():
     # print(list_folders_TPT)
     index_folder_TPT = int(input("\nPlease indicate the index of a folder to process its contents: "))
     folder_TPT = list_folders_TPT[index_folder_TPT]
-    print(path_folder_Outputs + folder_TPT)
-    iteration_index_folder_TPT = int(input("\nPlease indicate the iteration number (00,01,02,...): "))
-    iteration_index_folder_TPT = str(iteration_index_folder_TPT).zfill(2)
-    # next - check that the dataframe file exists
-    path_df = path_folder_Outputs + folder_TPT + "/" + folder_TPT[0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " + "TPT Measurements.csv"
-    print(path_df)
-    path_df_params = path_folder_Outputs + folder_TPT + "/" + folder_TPT[0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " +"TPT Parameters.csv"
-    df_file_exists = os.path.exists(path_df)
-    if(df_file_exists is True):
+    coreloss_calculation_mode = int(input("\nPlease select the coreloss calculation mode MM(1), manual(0): "))
+    if (coreloss_calculation_mode == 1):
+        iteration_index_folder = 19
+        Total_Coreloss = []
+        for iteration_index_folder_TPT in range(0,iteration_index_folder):
+            path_df = path_folder_Outputs + folder_TPT + "/" + folder_TPT[
+                                                               0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " + "TPT Measurements.csv"
+            path_df_params = path_folder_Outputs + folder_TPT + "/" + folder_TPT[
+                                                                      0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " + "TPT Parameters.csv"
+            df = pd.read_csv(path_df)
+            df_params = pd.read_csv(path_df_params)
+            tpt_automation.load_TPT_test_parameters(df_params)
+            Coreloss = TPT_coreloss_calculation(df, df_params)
+            Coreloss = round(float(Coreloss) * 1e6, 2)
+            Total_Coreloss.append(Coreloss)
+    else:
+        iteration_index_folder_TPT = int(input("\nPlease indicate the iteration number (00,01,02,...): "))
+
+        print("+---------------------------------------------+")
+        #for iteration_index_folder_TPT_2 in range(0,19):
+        iteration_index_folder_TPT = str(iteration_index_folder_TPT).zfill(2)
+        path_df = path_folder_Outputs + folder_TPT + "/" + folder_TPT[
+                                                           0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " + "TPT Measurements.csv"
+        path_df_params = path_folder_Outputs + folder_TPT + "/" + folder_TPT[
+                                                                  0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " + "TPT Parameters.csv"
         df = pd.read_csv(path_df)
         df_params = pd.read_csv(path_df_params)
-        tpt_automation.load_TPT_test_parameters(df_params)  # load geometrical + electrical parameters
-
-        # TODO w = 0.4 ... check if it still holds true [26/08/2022]
-        # TODO try to know what is w... [14/7/2023]
+        tpt_automation.load_TPT_test_parameters(df_params)
+        Coreloss = TPT_coreloss_calculation(df, df_params)
+        Coreloss = round(float(Coreloss) * 1e6,2)
+        print(path_df,"Coreloss is", "",Coreloss, "uJ")
         df = add_magnetic_variables_to_df(df, 0.4)
         fig1_handle, _ = plot_TPT_df_electrical(df, "Electrical variables vs. time - TPT acquisition", 1300, 975)
         fig2_handle, _, fig3_handle, _ = plot_TPT_df_magnetic(df, "Magnetic variables vs. time\nTPT acquisition", "BH loop - TPT acquisition", [540, 405], [500, 500])
         fig_select_handle, ax_select_handle = plot_single_variable(df, "Vp", "Select the first edge of the Stage III", 1200, 400)
-        Coreloss = TPT_coreloss_calculation(df,df_params)
-        print("The coreloss is " + str(Coreloss) + "J")
 
+
+
+    print("+---------------------------------------------+")
+
+
+    #iteration_index_folder_TPT = str(iteration_index_folder_TPT).zfill(2)
+    # next - check that the dataframe file exists
+    #path_df = path_folder_Outputs + folder_TPT + "/" + folder_TPT[0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " + "TPT Measurements.csv"
+    #path_df_params = path_folder_Outputs + folder_TPT + "/" + folder_TPT[0:-8] + "Iteration" + " " + iteration_index_folder_TPT + " - " +"TPT Parameters.csv"
+    #df_file_exists = os.path.exists(path_df)
+    #if(df_file_exists is True):
+    #    df = pd.read_csv(path_df)
+    #    df_params = pd.read_csv(path_df_params)
+    #    tpt_automation.load_TPT_test_parameters(df_params)  # load geometrical + electrical parameters
+    #    df = add_magnetic_variables_to_df(df, 0.4)
+    #    fig1_handle, _ = plot_TPT_df_electrical(df, "Electrical variables vs. time - TPT acquisition", 1300, 975)
+    #   fig2_handle, _, fig3_handle, _ = plot_TPT_df_magnetic(df, "Magnetic variables vs. time\nTPT acquisition", "BH loop - TPT acquisition", [540, 405], [500, 500])
+    #    fig_select_handle, ax_select_handle = plot_single_variable(df, "Vp", "Select the first edge of the Stage III", 1200, 400)
+    #    Coreloss = TPT_coreloss_calculation(df,df_params)
+    #    print("The coreloss is " + str(Coreloss) + "J")
+        #这个后面是最开始就被comment掉的东西
         # def onselect(xmin, xmax):
         #     x = df["Time"].to_numpy()
         #     indmin, indmax = np.searchsorted(x, (xmin, xmax))
@@ -311,11 +349,11 @@ def TPT_guided_processing():
         # mgr_5.window.setGeometry(800, 440, 375, 375)
         # mgr_6.window.setGeometry(1175, 440, 375, 375)
         # from IPython import embed; embed()
-    else:
-        print("The dataframe file could not be found in the selected folder.")
-    input("\nPress Enter to continue.")
-    plt.close('all')
-    clear_terminal()
+#    else:
+#        print("The dataframe file could not be found in the selected folder.")
+#    input("\nPress Enter to continue.")
+ #   plt.close('all')
+ #   clear_terminal()
 
 
 def clear_terminal():
@@ -328,21 +366,23 @@ def add_magnetic_variables_to_df(df, w):
     Ns = tpt_settings.N2
     Ae = tpt_settings.Ae
     le = tpt_settings.le
+    # print(Np,Ns,Ae,le)
     # Extract acquisition variables
     time = df["Time"].to_numpy()
     sampling_time = (time[1]-time[0]) * 1e-9  #ns
     length = df.shape[0]
-    
+
     # Calculate B
     Vs = df["Vs"].to_numpy()
     B = np.zeros(length)
     for x in range(1, length):
         B[x] = B[x-1] + (Vs[x] + Vs[x-1])*sampling_time/2  # integration
     B = B / Ae / Ns
+    print(B)
 
     # Calculate H
     Cp = df["Cp"].to_numpy()
-    
+
     # Correct current offset
     Cp_corr = Cp - sum(Cp[0:49])/50
     df['Cp'] = Cp_corr

@@ -61,8 +61,8 @@ def set_oscilloscope_channel_range(chandle, channel, channel_range, analogue_off
                                        analogue_offset)
 
         #ps3.ps3000aSetBandwidthFilter(chandle,
-        #                              channel,
-         #                             ps3.PS3000A_BANDWIDTH_LIMITER['PS3000A_BW_20MHZ'])
+        #                             channel,
+        #                             ps3.PS3000A_BANDWIDTH_LIMITER['PS3000A_BW_20MHZ'])
     try:
         assert_pico_ok(status)
     except PicoSDKCtypesError:
